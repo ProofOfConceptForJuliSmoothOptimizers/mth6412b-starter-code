@@ -29,11 +29,11 @@ function score_picture(filename::String)
 end
 
 """Write a tour in TSPLIB format."""
-function write_tour(filename::String, tour::Array{Int}, cost::Float32)
+function write_tour(filename::String, tour::Array{Int}, cost::Float64)
 	file = open(filename, "w")
 	length_tour = length(tour)
 	write(file,"NAME : $filename\n")
-	write(file,"COMMENT : LENGHT = $cost\n")
+	write(file,"COMMENT : LENGTH = $cost\n")
 	write(file,"TYPE : TOUR\n")
 	write(file,"DIMENSION : $length_tour\n")
 	write(file,"TOUR_SECTION\n")
@@ -93,4 +93,49 @@ function get_edge_matrix(picture::Array{RGB{Normed{UInt8,8}},2})
 		end
 	end
 	return w
+end
+
+""" TODO! """
+function create_picture_data(initial_picture::String, new_dims::Tuple{Int64,Int64})
+
+	filepath = joinpath(@__DIR__, "..", "images", "original", initial_picture * ".png")
+	img = load(filepath)
+	img_small = imresize(img, new_dims)
+	resized_img_path = joinpath(@__DIR__, "..", "images", "original", initial_picture * "-$(new_dims).png")
+	save(resized_img_path, img_small)
+
+	resized_img_shuffle_path = joinpath(@__DIR__, "..", "images", "shuffled", initial_picture * "-$(new_dims).png")
+	shuffle_picture(resized_img_path, resized_img_shuffle_path; view=false)
+
+	img_small = load(resized_img_shuffle_path)
+	w = get_edge_matrix(img_small)
+
+	for i in 1:new_dims[2]
+	    for j in i:new_dims[2]
+	        w[j,i] = w[i,j]
+	    end
+	end 
+
+	tsp_file = open(joinpath(@__DIR__, "..", "tsp", "instances", initial_picture * "-$(new_dims).tsp"), "w")
+	write(tsp_file,"NAME : $(initial_picture * "$(new_dims)")\n")
+	write(tsp_file,"TYPE : TSP\n")
+	write(tsp_file, "COMMENT: Very resized $initial_picture\n")
+	write(tsp_file,"DIMENSION : $(new_dims[2] + 1)\n")
+	write(tsp_file,"EDGE_WEIGHT_TYPE : EXPLICIT\n")
+	write(tsp_file,"EDGE_WEIGHT_FORMAT : FULL_MATRIX\n")
+	# write(tsp_file,"NODE_COORD_TYPE : NO_COORDS\n")
+	write(tsp_file,"DISPLAY_DATA_TYPE : NO_DISPLAY\n")
+	write(tsp_file, "EDGE_WEIGHT_SECTION\n")
+
+	[write(tsp_file, "0.0 ") for i in 1:new_dims[2] + 1]
+	write(tsp_file, '\n')
+	for i in 1:new_dims[2]
+		write(tsp_file, "0.0 ")
+	    for j in 1:new_dims[2]
+	        write(tsp_file, "$(w[i,j]) ")
+	    end
+	    write(tsp_file, '\n')
+	end
+
+	close(tsp_file)
 end

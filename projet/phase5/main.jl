@@ -21,43 +21,35 @@ include(joinpath(@__DIR__, "RSL.jl"))
 include(joinpath(@__DIR__, "HK.jl"))
 include(joinpath(@__DIR__, "shredder-julia", "bin", "tools.jl"))
 
-println("Make sure you are running this file from the phase4 folder!")
-println("Choose a symmetric instance (e.g bays29.tsp): ")
 
-# filename = readline()
-filename = "pizza-food-wallpaper.png"
-filepath = joinpath(@__DIR__, "shredder-julia", "images", "original", filename)
-img = load(filepath)
-img_small = imresize(img, (100,100))
-w = get_edge_matrix(img_small)
+picture_name = "blue-hour-paris"
+# create_picture_data(picture_name, (200,200))
 
-for i in 1:100
-    for j in i:100
-        w[j,i] = w[i,j]
-    end
-end 
 
-file = open(joinpath(@__DIR__, "shredder-julia", "tsp", "instances", "small-pizzetta.tsp"), "w")
-write(file,"NAME : small-pizzetta\n")
-write(file,"TYPE : TSP\n")
-write(file, "COMMENT: Very small pizzetta\n")
-write(file,"DIMENSION : 100\n")
-write(file,"EDGE_WEIGHT_TYPE : EXPLICIT\n")
-write(file,"EDGE_WEIGHT_FORMAT : FULL_MATRIX\n")
-# write(file,"NODE_COORD_TYPE : NO_COORDS\n")
-write(file,"DISPLAY_DATA_TYPE : NO_DISPLAY\n")
-write(file, "EDGE_WEIGHT_SECTION\n")
 
-for i in 1:100
-    for j in 1:100
-        write(file, "$(w[i,j]) ")
-    end
-    write(file, '\n')
+graph = build_graph(joinpath(@__DIR__, "shredder-julia", "tsp", "instances", picture_name * ".tsp"))
+
+root_node = nodes(graph)[findfirst(n -> name(n) == "1", nodes(graph))]
+println(root_node)
+cycle, cycle_weight = rsl(graph, root_node)
+
+tour = zeros(Int, length(nodes(cycle)) + 1)
+tour[1] = -1
+tour[2] = 1
+next_node = "1"
+
+for i in 3:length(nodes(cycle)) + 1 
+    idx = findfirst(e -> next_node in nodes(e) && !(tour[i-2] in [parse(Int, name) for name in nodes(e)]), edges(cycle))
+    next_node = next_node == nodes(edges(cycle)[idx])[1] ? nodes(edges(cycle)[idx])[2] : nodes(edges(cycle)[idx])[1]
+    tour[i] = parse(Int, next_node)
 end
-close(file)
+tour = tour[2: end]
 
-graph = build_graph(joinpath(@__DIR__, "shredder-julia", "tsp", "instances", "small-pizzetta.tsp"))
+println("tour length: ", length(tour))
+tour = tour .- 1
+tour_filename = joinpath(@__DIR__, "shredder-julia", "tsp", "tours", picture_name * ".tour")
+input_filename = joinpath(@__DIR__, "shredder-julia", "images", "shuffled", picture_name * ".png")
+output_filename = joinpath(@__DIR__, "shredder-julia", "images", "reconstructed", picture_name * "FINAL.png")
+write_tour(tour_filename, tour, cycle_weight)
 
-plot_graph(graph)
-
-# show(graph)
+reconstruct_picture(tour_filename, input_filename, output_filename; view=true)
