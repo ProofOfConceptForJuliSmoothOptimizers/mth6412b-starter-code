@@ -85,5 +85,19 @@ function hk(graph::Graph{T,P}; is_kruskal = true, step_size_0::Float64 = 1.0, ϵ
         push!(period, new_period)
     end
 
-    return one_tree_best, best_W
+
+    tree_struc_best = Tree(one_tree_best)
+    preorder = dfs_1tree(tree_struc_best)
+    hamiltonian_cycle = Graph("hamiltonian_cycle", nodes(graph), Vector{Edge{P}}())
+    # This step assumes that the graph is a complete graph.
+    for i in 1:length(preorder) - 1
+        current_node = preorder[i]
+        next_node = preorder[i+1]
+        edge_idx = findfirst(x -> any(y -> y == nodes(x), [(current_node, next_node), (next_node, current_node)]), edges(graph))
+        add_edge!(hamiltonian_cycle, edges(graph)[edge_idx])
+    end
+    edge_idx = findfirst(x -> any(y -> y == nodes(x), [(preorder[1], preorder[end]), (preorder[end], preorder[1])]), edges(graph))
+    add_edge!(hamiltonian_cycle, edges(graph)[edge_idx])
+    
+    return one_tree_best, best_W, hamiltonian_cycle,  total_weight(hamiltonian_cycle)
 end
