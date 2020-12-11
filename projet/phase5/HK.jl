@@ -10,7 +10,7 @@ It presupposes that the graph given is a complete graph.
 
 function hk(graph::Graph{T,P}; is_kruskal = true, step_size_0::Float64 = 1.0, ϵ::Float64 = 1*10^-5, version = lin_kernighan, timer::Int64 = 60) where {T,P}
     # Compute Minimal Spanning Tree of the graph:
-    
+
     π = zeros(Float64, length(nodes(graph)))
     gradient = [-2.0 for i in 1:length(π)]  
     
@@ -18,6 +18,7 @@ function hk(graph::Graph{T,P}; is_kruskal = true, step_size_0::Float64 = 1.0, ϵ
 
     one_tree = Graph("1-tree", nodes(graph), Vector{Edge{P}}())
     one_tree_best = one_tree
+    tree_best=nothing
     best_W = -Inf
     # The first element is the previous value of W, the second element is the current value of W
     W_state = [-Inf, -Inf]
@@ -25,7 +26,7 @@ function hk(graph::Graph{T,P}; is_kruskal = true, step_size_0::Float64 = 1.0, ϵ
     step_size = step_size_0
     start = time()
     while norm(gradient) > ϵ  && period[end] > 0 && step_size > ϵ  && (time() - start) < timer && (abs(W_state[1] - W_state[2]) > ϵ || length(period) <= 1)
-        
+     
         for iter in 1:period[end]     
             (time() - start) > timer && break
             
@@ -58,6 +59,7 @@ function hk(graph::Graph{T,P}; is_kruskal = true, step_size_0::Float64 = 1.0, ϵ
             if best_W<W_state[2]
                 best_W=W_state[2]
                 one_tree_best=one_tree
+                tree_best=mst
             end
             # checking if we have to stop doubling the step size:
             if length(period) == 1 && !stop_doubling && W_state[1] < W_state[2]
@@ -85,10 +87,13 @@ function hk(graph::Graph{T,P}; is_kruskal = true, step_size_0::Float64 = 1.0, ϵ
         push!(period, new_period)
     end
 
+    root_node = nodes(tree_best)[findfirst(n -> name(n) == "1", nodes(tree_best))]
 
-    tree_struc_best = Tree(one_tree_best)
-    preorder = dfs_1tree(tree_struc_best)
+    tree_struc_best = Tree(ConnectedComponent(name(root_node),nodes(tree_best),edges(tree_best),0))
+  
+    preorder = dfs(tree_struc_best)
     hamiltonian_cycle = Graph("hamiltonian_cycle", nodes(graph), Vector{Edge{P}}())
+  
     # This step assumes that the graph is a complete graph.
     for i in 1:length(preorder) - 1
         current_node = preorder[i]

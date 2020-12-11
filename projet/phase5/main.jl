@@ -6,7 +6,7 @@ import Base.show
 using Plots
 using LinearAlgebra
 using Random, FileIO, Images, ImageView, ImageMagick
-
+@enum Version slow_convergence = 1 lin_kernighan = 2
 
 include(joinpath(@__DIR__, "exceptions.jl"))
 include(joinpath(@__DIR__, "node.jl"))
@@ -21,9 +21,9 @@ include(joinpath(@__DIR__, "RSL.jl"))
 include(joinpath(@__DIR__, "HK.jl"))
 include(joinpath(@__DIR__, "shredder-julia", "bin", "tools.jl"))
 
-
+is_RSL=false
 picture_name = "blue-hour-paris"
-# create_picture_data(picture_name, (200,200))
+ #create_picture_data(picture_name, (5,5))
 
 
 
@@ -31,21 +31,19 @@ graph = build_graph(joinpath(@__DIR__, "shredder-julia", "tsp", "instances", pic
 
 root_node = nodes(graph)[findfirst(n -> name(n) == "1", nodes(graph))]
 println(root_node)
-cycle, cycle_weight = rsl(graph, root_node)
-
+cycle, cycle_weight = is_RSL ? rsl(graph, root_node) : hk(graph)[3:4]
 tour = zeros(Int, length(nodes(cycle)) + 1)
 tour[1] = -1
 tour[2] = 1
 next_node = "1"
-
 for i in 3:length(nodes(cycle)) + 1 
     idx = findfirst(e -> next_node in nodes(e) && !(tour[i-2] in [parse(Int, name) for name in nodes(e)]), edges(cycle))
-    next_node = next_node == nodes(edges(cycle)[idx])[1] ? nodes(edges(cycle)[idx])[2] : nodes(edges(cycle)[idx])[1]
+global  next_node = next_node == nodes(edges(cycle)[idx])[1] ? nodes(edges(cycle)[idx])[2] : nodes(edges(cycle)[idx])[1]
     tour[i] = parse(Int, next_node)
 end
 tour = tour[2: end]
 
-println("tour length: ", length(tour))
+
 tour = tour .- 1
 tour_filename = joinpath(@__DIR__, "shredder-julia", "tsp", "tours", picture_name * ".tour")
 input_filename = joinpath(@__DIR__, "shredder-julia", "images", "shuffled", picture_name * ".png")
