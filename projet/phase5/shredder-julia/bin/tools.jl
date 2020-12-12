@@ -2,8 +2,8 @@
 
 """Compute the similarity score between two pixels."""
 function compare_pixels(p1, p2)
-	r1, g1, b1 = red(p1), green(p1), blue(p1)
-	r2, g2, b2 = red(p2), green(p2), blue(p2)
+	r1, g1, b1 = Float64(red(p1)), Float64(green(p1)), Float64(blue(p1))
+	r2, g2, b2 = Float64(red(p2)), Float64(green(p2)), Float64(blue(p2))
 	return abs(r1-r2) + abs(g1-g2) + abs(b1-b2)
 end
 
@@ -23,6 +23,7 @@ function score_picture(filename::String)
 	nb_col = size(picture, 2)
 	score = 0
 	for col = 1 : nb_col - 1
+		println(col,"-",col+1, "->",compare_columns(picture[:,col], picture[:,col+1]))
 		score += compare_columns(picture[:,col], picture[:,col+1])
 	end
 	return score
@@ -136,6 +137,5 @@ function create_picture_data(initial_picture::String, new_dims::Tuple{Int64,Int6
 	    end
 	    write(tsp_file, '\n')
 	end
-
 	close(tsp_file)
 end

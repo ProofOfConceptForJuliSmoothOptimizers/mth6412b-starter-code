@@ -24,12 +24,13 @@ function hk(graph::Graph{T,P}; is_kruskal = true, step_size_0::Float64 = 1.0, ϵ
     W_state = [-Inf, -Inf]
     stop_doubling = version == slow_convergence ? true : false
     step_size = step_size_0
+    println("starting main loop of HK")
     start = time()
     while norm(gradient) > ϵ  && period[end] > 0 && step_size > ϵ  && (time() - start) < timer && (abs(W_state[1] - W_state[2]) > ϵ || length(period) <= 1)
      
         for iter in 1:period[end]     
             (time() - start) > timer && break
-            
+            println("time: ",(time() - start) )
             # update edge weights based on the node names:
             pi_graph=Graph("pi_graph",nodes(graph),Vector{Edge{P}}())
             for edge in edges(graph)
@@ -86,12 +87,13 @@ function hk(graph::Graph{T,P}; is_kruskal = true, step_size_0::Float64 = 1.0, ϵ
         step_size = (version == slow_convergence) ? step_size_0 / norm(period, 1) : step_size / 2
         push!(period, new_period)
     end
-
+    println("The main loop of HK ended")
     root_node = nodes(tree_best)[findfirst(n -> name(n) == "1", nodes(tree_best))]
 
     tree_struc_best = Tree(ConnectedComponent(name(root_node),nodes(tree_best),edges(tree_best),0))
-  
+    println("number of edges= ", length(edges(tree_best))," number of nodes= ", length(nodes(tree_best)))
     preorder = dfs(tree_struc_best)
+    println("preorder found")
     hamiltonian_cycle = Graph("hamiltonian_cycle", nodes(graph), Vector{Edge{P}}())
   
     # This step assumes that the graph is a complete graph.
