@@ -97,42 +97,46 @@ function get_edge_matrix(picture::Array{RGB{Normed{UInt8,8}},2})
 end
 
 """ TODO! """
-function create_picture_data(initial_picture::String, new_dims::Tuple{Int64,Int64})
+function create_picture_data(initial_picture::String, new_dims::Tuple{Int64,Int64} = (1,1); is_resize = false)
 
 	filepath = joinpath(@__DIR__, "..", "images", "original", initial_picture * ".png")
 	img = load(filepath)
-	img_small = imresize(img, new_dims)
-	resized_img_path = joinpath(@__DIR__, "..", "images", "original", initial_picture * "-$(new_dims).png")
+	img_small = is_resize ? imresize(img, new_dims) : img
+
+	dim_str = is_resize ? "-$(new_dims)" : "" 
+
+	resized_img_path = joinpath(@__DIR__, "..", "images", "original", initial_picture * dim_str * ".png")
 	save(resized_img_path, img_small)
 
-	resized_img_shuffle_path = joinpath(@__DIR__, "..", "images", "shuffled", initial_picture * "-$(new_dims).png")
+	resized_img_shuffle_path = joinpath(@__DIR__, "..", "images", "shuffled",initial_picture * dim_str * ".png")
 	shuffle_picture(resized_img_path, resized_img_shuffle_path; view=false)
 
 	img_small = load(resized_img_shuffle_path)
 	w = get_edge_matrix(img_small)
 
-	for i in 1:new_dims[2]
-	    for j in i:new_dims[2]
+	dims = length(img_small[1, :])
+
+	for i in 1:dims
+	    for j in i:dims
 	        w[j,i] = w[i,j]
 	    end
 	end 
 
-	tsp_file = open(joinpath(@__DIR__, "..", "tsp", "instances", initial_picture * "-$(new_dims).tsp"), "w")
-	write(tsp_file,"NAME : $(initial_picture * "$(new_dims)")\n")
+	tsp_file = open(joinpath(@__DIR__, "..", "tsp", "instances", initial_picture * dim_str * ".tsp"), "w")
+	write(tsp_file,"NAME : $(initial_picture)" * (dim_str) * "\n")
 	write(tsp_file,"TYPE : TSP\n")
 	write(tsp_file, "COMMENT: Very resized $initial_picture\n")
-	write(tsp_file,"DIMENSION : $(new_dims[2] + 1)\n")
+	write(tsp_file,"DIMENSION : $(dims + 1)\n")
 	write(tsp_file,"EDGE_WEIGHT_TYPE : EXPLICIT\n")
 	write(tsp_file,"EDGE_WEIGHT_FORMAT : FULL_MATRIX\n")
-	# write(tsp_file,"NODE_COORD_TYPE : NO_COORDS\n")
 	write(tsp_file,"DISPLAY_DATA_TYPE : NO_DISPLAY\n")
 	write(tsp_file, "EDGE_WEIGHT_SECTION\n")
 
-	[write(tsp_file, "0.0 ") for i in 1:new_dims[2] + 1]
+	[write(tsp_file, "0.0 ") for i in 1:dims + 1]
 	write(tsp_file, '\n')
-	for i in 1:new_dims[2]
+	for i in 1:dims
 		write(tsp_file, "0.0 ")
-	    for j in 1:new_dims[2]
+	    for j in 1:dims
 	        write(tsp_file, "$(w[i,j]) ")
 	    end
 	    write(tsp_file, '\n')

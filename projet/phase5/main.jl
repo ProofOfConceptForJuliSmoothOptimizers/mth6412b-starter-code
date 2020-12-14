@@ -22,15 +22,14 @@ include(joinpath(@__DIR__, "HK.jl"))
 include(joinpath(@__DIR__, "shredder-julia", "bin", "tools.jl"))
 
 is_RSL=false
-picture_name = "blue-hour-paris"
- #create_picture_data(picture_name, (5,5))
+picture_name = "lower-kananaskis-lake-(200, 300)"
+# create_picture_data(picture_name, (200,300); is_resize = true)
 
-
-
+# die()
 graph = build_graph(joinpath(@__DIR__, "shredder-julia", "tsp", "instances", picture_name * ".tsp"))
+println("build graph done ✅")
 
 root_node = nodes(graph)[findfirst(n -> name(n) == "1", nodes(graph))]
-println(root_node)
 cycle, cycle_weight = is_RSL ? rsl(graph, root_node) : hk(graph)[3:4]
 tour = zeros(Int, length(nodes(cycle)) + 1)
 tour[1] = -1
@@ -49,5 +48,7 @@ tour_filename = joinpath(@__DIR__, "shredder-julia", "tsp", "tours", picture_nam
 input_filename = joinpath(@__DIR__, "shredder-julia", "images", "shuffled", picture_name * ".png")
 output_filename = joinpath(@__DIR__, "shredder-julia", "images", "reconstructed", picture_name * "FINAL.png")
 write_tour(tour_filename, tour, cycle_weight)
+
+println("write tour done ✅")
 
 reconstruct_picture(tour_filename, input_filename, output_filename; view=true)
