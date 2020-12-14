@@ -23,7 +23,7 @@ include(joinpath(@__DIR__, "shredder-julia", "bin", "tools.jl"))
 
 is_RSL=false
 picture_name = "lower-kananaskis-lake-(200, 300)"
-# create_picture_data(picture_name, (200,300); is_resize = true)
+create_picture_data(picture_name, (200,300); is_resize = true)
 
 # die()
 graph = build_graph(joinpath(@__DIR__, "shredder-julia", "tsp", "instances", picture_name * ".tsp"))
@@ -52,3 +52,5 @@ write_tour(tour_filename, tour, cycle_weight)
 println("write tour done ✅")
 
 reconstruct_picture(tour_filename, input_filename, output_filename; view=true)
+
+println("Best cycle weight found: $cycle_weight")

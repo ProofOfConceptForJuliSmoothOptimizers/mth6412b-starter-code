@@ -96,13 +96,16 @@ function get_edge_matrix(picture::Array{RGB{Normed{UInt8,8}},2})
 	return w
 end
 
-""" TODO! """
+""" generates a  rescaled picture of the image  and its tsp file. 
+"""
 function create_picture_data(initial_picture::String, new_dims::Tuple{Int64,Int64} = (1,1); is_resize = false)
 
+	# loads the file and resive if needed.
 	filepath = joinpath(@__DIR__, "..", "images", "original", initial_picture * ".png")
 	img = load(filepath)
 	img_small = is_resize ? imresize(img, new_dims) : img
 
+	# string required to rename the file if resizing occurs.
 	dim_str = is_resize ? "-$(new_dims)" : "" 
 
 	resized_img_path = joinpath(@__DIR__, "..", "images", "original", initial_picture * dim_str * ".png")
